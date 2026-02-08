@@ -1,23 +1,35 @@
 # Patient Management System
 
-A modern REST API for managing patient records with comprehensive CRUD operations, built with Spring Boot 3.5 and Java 21.
+A Spring Boot microservices application for managing patient records and billing, featuring gRPC inter-service communication, RESTful APIs, and containerized deployment.
 
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.10-brightgreen.svg)](https://spring.io/projects/spring-boot)
-[![H2 Database](https://img.shields.io/badge/H2-In--Memory-blue.svg)](https://www.h2database.com/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![gRPC](https://img.shields.io/badge/gRPC-1.79.0-blue.svg)](https://grpc.io/)
+[![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED.svg)](https://www.docker.com/)
 
 ## Features
 
-- **Complete CRUD Operations** - Create, read, update, and delete patient records
+### Patient Service
+- **Complete CRUD Operations** - RESTful API for patient record management
 - **Email Uniqueness** - Enforced at both database and service layers
 - **Smart Validation** - Validation groups for create vs. update operations
-- **UUID Primary Keys** - Auto-generated unique identifiers for all patients
-- **Layered Architecture** - Clean separation of concerns (Controller → Service → Repository)
-- **In-Memory Database** - H2 database with web console for development/testing
+- **UUID Primary Keys** - Auto-generated unique identifiers
+- **gRPC Client Integration** - Communicates with Billing Service for account creation
+- **Flexible Database Support** - H2 for development, PostgreSQL for production
+- **OpenAPI Documentation** - Interactive Swagger UI for API exploration
 - **DTO Pattern** - Request/Response separation with validation constraints
-- **Global Exception Handling** - Centralized error handling with custom exceptions
-- **Sample Data** - Pre-loaded test data via SQL scripts
+
+### Billing Service
+- **gRPC Server** - High-performance RPC service for billing operations
+- **Protocol Buffers** - Strongly-typed service contracts
+- **Billing Account Creation** - Automated account provisioning via gRPC
+
+### Infrastructure
+- **Microservices Architecture** - Independent, scalable services
+- **Docker Support** - Multi-stage builds with optimized images
+- **Inter-Service Communication** - gRPC for synchronous, type-safe communication
+- **Global Exception Handling** - Centralized error handling across services
+- **Sample Data** - Pre-loaded test data for quick development
 
 ## Technology Stack
 
@@ -25,11 +37,14 @@ A modern REST API for managing patient records with comprehensive CRUD operation
 |----------|-----------|
 | **Language** | Java 21 (LTS) |
 | **Framework** | Spring Boot 3.5.10 |
-| **Database** | H2 in-memory |
+| **Inter-Service Communication** | gRPC 1.79.0 + Protocol Buffers 4.33.3 |
+| **gRPC Integration** | grpc-spring-boot-starter 3.1.0.RELEASE (net.devh) |
+| **Database** | H2 (development) / PostgreSQL (production) |
 | **ORM** | Spring Data JPA + Hibernate |
-| **Build Tool** | Maven |
+| **Build Tool** | Maven with protobuf-maven-plugin |
+| **Containerization** | Docker with multi-stage builds |
+| **API Documentation** | SpringDoc OpenAPI 3 (v2.8.15) |
 | **Validation** | Jakarta Bean Validation |
-| **Utilities** | Custom Mappers, Validation Groups |
 
 ## Quick Start
 
@@ -37,38 +52,78 @@ A modern REST API for managing patient records with comprehensive CRUD operation
 
 - **Java 21** or higher ([Download](https://www.oracle.com/java/technologies/downloads/#java21))
 - **Maven 3.x** (or use included wrapper)
+- **Docker** (optional, for containerized deployment)
 
-### Installation
+### Option 1: Local Development (Maven)
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd patient-management
-   ```
+#### 1. Clone the repository
+```bash
+git clone <repository-url>
+cd patient-management
+```
 
-2. **Build the project**
-   ```bash
-   cd patient-service
-   ./mvnw clean install
-   ```
+#### 2. Start Billing Service (Port 9001)
+```bash
+cd billing-service
+./mvnw clean install
+./mvnw spring-boot:run
+```
 
-3. **Run the application**
-   ```bash
-   ./mvnw spring-boot:run
-   ```
+#### 3. Start Patient Service (Port 4000)
+Open a new terminal:
+```bash
+cd patient-service
+./mvnw clean install
+./mvnw spring-boot:run
+```
 
-The service will start on `http://localhost:4000`.
+**Services:**
+- Patient Service REST API: `http://localhost:4000`
+- Swagger UI: `http://localhost:4000/swagger-ui.html`
+- H2 Console: `http://localhost:4000/h2-console`
+- Billing Service gRPC: `localhost:9001`
 
-### Accessing H2 Console
+### Option 2: Docker Deployment
 
-Visit `http://localhost:4000/h2-console` with these credentials:
-- **JDBC URL:** `jdbc:h2:mem:testdb`
-- **Username:** `admin_viewer`
-- **Password:** `password`
+#### Build and run both services:
+```bash
+# Build and start Billing Service
+cd billing-service
+docker build -t billing-service:latest .
+docker run -d --name billing-service -p 4001:4001 -p 9001:9001 billing-service:latest
+
+# Build and start Patient Service
+cd ../patient-service
+docker build -t patient-service:latest .
+docker run -d --name patient-service -p 4000:4000 \
+  -e BILLING_SERVICE_ADDRESS=billing-service \
+  -e BILLING_SERVICE_GRPC_PORT=9001 \
+  --link billing-service \
+  patient-service:latest
+```
+
+### Accessing Services
+
+**Patient Service:**
+- REST API: `http://localhost:4000/patients`
+- Swagger UI: `http://localhost:4000/swagger-ui.html`
+- OpenAPI Docs: `http://localhost:4000/v3/api-docs`
+
+**H2 Console** (Patient Service):
+- URL: `http://localhost:4000/h2-console`
+- JDBC URL: `jdbc:h2:mem:testdb`
+- Username: `admin_viewer`
+- Password: `password`
+
+**Billing Service:**
+- gRPC Server: `localhost:9001`
+- HTTP Port: `4001` (reserved for future use)
 
 ## API Documentation
 
-### Get All Patients
+### Patient Service REST API
+
+#### Get All Patients
 
 **Endpoint:** `GET /patients`
 
@@ -90,9 +145,11 @@ Visit `http://localhost:4000/h2-console` with these credentials:
 curl http://localhost:4000/patients
 ```
 
-### Create a Patient
+#### Create a Patient
 
 **Endpoint:** `POST /patients`
+
+**Note:** Creating a patient automatically triggers billing account creation via gRPC call to Billing Service.
 
 **Request Body:**
 ```json
@@ -129,7 +186,7 @@ curl -X POST http://localhost:4000/patients \
   }'
 ```
 
-### Update a Patient
+#### Update a Patient
 
 **Endpoint:** `PUT /patients/{id}`
 
@@ -168,7 +225,7 @@ curl -X PUT http://localhost:4000/patients/7c9e6679-7425-40de-944b-e07fc1f90ae7 
   }'
 ```
 
-### Delete a Patient
+#### Delete a Patient
 
 **Endpoint:** `DELETE /patients/{id}`
 
@@ -179,7 +236,7 @@ curl -X PUT http://localhost:4000/patients/7c9e6679-7425-40de-944b-e07fc1f90ae7 
 curl -X DELETE http://localhost:4000/patients/7c9e6679-7425-40de-944b-e07fc1f90ae7
 ```
 
-### Error Handling
+#### Error Handling
 
 **Patient Not Found (400 Bad Request):**
 ```json
@@ -203,49 +260,115 @@ curl -X DELETE http://localhost:4000/patients/7c9e6679-7425-40de-944b-e07fc1f90a
 }
 ```
 
+### Billing Service gRPC API
+
+**Service:** `BillingService`
+
+**RPC Method:** `CreateBillingAccount`
+
+**Request (BillingRequest):**
+```protobuf
+message BillingRequest {
+  string patientId = 1;
+  string name = 2;
+  string email = 3;
+}
+```
+
+**Response (BillingResponse):**
+```protobuf
+message BillingResponse {
+  string accountId = 1;
+  string status = 2;
+}
+```
+
+**Protocol Buffer Definition:** `src/main/proto/billing_service.proto`
+
+**Note:** This service is called automatically by Patient Service when creating a new patient. Sample gRPC requests are available in `grpc-requests/billing-service/`.
+
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────┐
-│           Controller Layer                      │
-│  (REST endpoints, validation annotations)       │
-└──────────────────┬──────────────────────────────┘
-                   │
-┌──────────────────▼──────────────────────────────┐
-│           Service Layer                          │
-│  (Business logic, email uniqueness checks)      │
-└──────────────────┬──────────────────────────────┘
-                   │
-┌──────────────────▼──────────────────────────────┐
-│           Repository Layer                       │
-│  (Spring Data JPA, custom query methods)        │
-└──────────────────┬──────────────────────────────┘
-                   │
-┌──────────────────▼──────────────────────────────┐
-│           H2 Database                            │
-│  (In-memory storage)                            │
-└─────────────────────────────────────────────────┘
-```
-
-### Package Structure
+### Microservices Overview
 
 ```
-dev.toganbayev.patientservice/
-├── controller/     # REST endpoints (@RestController)
-├── service/        # Business logic (@Service)
-├── repository/     # Data access (@Repository)
-├── model/          # JPA entities (@Entity)
-├── dto/            # Request/Response DTOs
-│   └── validators/ # Custom validation groups
-├── mapper/         # Entity-DTO conversion utilities
-└── exception/      # Custom exceptions and global handler
+┌─────────────────────────────────┐         ┌─────────────────────────────────┐
+│      Patient Service            │         │      Billing Service            │
+│                                 │         │                                 │
+│  REST API (Port 4000)           │  gRPC   │  gRPC Server (Port 9001)        │
+│  ┌──────────────────────┐       │ ──────> │  ┌──────────────────────┐      │
+│  │ PatientController    │       │         │  │ BillingGrpcService   │      │
+│  └──────────┬───────────┘       │         │  └──────────────────────┘      │
+│             │                   │         │                                 │
+│  ┌──────────▼───────────┐       │         │  HTTP (Port 4001)               │
+│  │ PatientService       │       │         │                                 │
+│  │ + BillingGrpcClient  │       │         └─────────────────────────────────┘
+│  └──────────┬───────────┘       │
+│             │                   │
+│  ┌──────────▼───────────┐       │
+│  │ PatientRepository    │       │
+│  └──────────────────────┘       │
+│             │                   │
+│  ┌──────────▼───────────┐       │
+│  │ H2 / PostgreSQL DB   │       │
+│  └──────────────────────┘       │
+└─────────────────────────────────┘
+```
+
+### Patient Service - Layered Architecture
+
+```
+Controller → Service → Repository → Entity
+     ↓         ↓           ↓
+    DTOs   gRPC Client  Mappers
+```
+
+### Project Structure
+
+```
+patient-management/
+├── patient-service/                 # Patient management REST API
+│   ├── src/main/
+│   │   ├── java/dev/toganbayev/patientservice/
+│   │   │   ├── controller/         # REST controllers
+│   │   │   ├── service/            # Business logic
+│   │   │   ├── repository/         # JPA repositories
+│   │   │   ├── model/              # JPA entities
+│   │   │   ├── dto/                # Request/Response DTOs
+│   │   │   ├── mapper/             # Entity-DTO mappers
+│   │   │   ├── grpc/               # gRPC client
+│   │   │   ├── exception/          # Custom exceptions
+│   │   │   └── validation/         # Validation groups
+│   │   ├── proto/                  # Protocol buffer definitions
+│   │   └── resources/
+│   │       ├── application.properties
+│   │       └── data.sql            # H2 initialization data
+│   ├── Dockerfile
+│   └── pom.xml
+├── billing-service/                # Billing management gRPC service
+│   ├── src/main/
+│   │   ├── java/dev/toganbayev/billingservice/
+│   │   │   └── grpc/               # gRPC service implementation
+│   │   ├── proto/                  # Protocol buffer definitions
+│   │   └── resources/
+│   │       └── application.properties
+│   ├── Dockerfile
+│   └── pom.xml
+├── api-requests/                   # Sample HTTP requests
+│   └── patient-service/
+├── grpc-requests/                  # Sample gRPC requests
+│   └── billing-service/
+├── CLAUDE.md                       # Development guidelines
+└── README.md                       # This file
 ```
 
 ## Testing
 
-### Run Tests
+### Patient Service Tests
 
 ```bash
+cd patient-service
+
 # Run all tests
 ./mvnw test
 
@@ -256,12 +379,26 @@ dev.toganbayev.patientservice/
 ./mvnw clean package -DskipTests
 ```
 
-## Development
-
-### Build Commands
+### Billing Service Tests
 
 ```bash
-# Clean build
+cd billing-service
+
+# Run all tests
+./mvnw test
+
+# Package without running tests
+./mvnw clean package -DskipTests
+```
+
+## Development
+
+### Build Commands (Patient Service)
+
+```bash
+cd patient-service
+
+# Clean build (compiles proto files automatically)
 ./mvnw clean install
 
 # Skip tests
@@ -277,18 +414,98 @@ dev.toganbayev.patientservice/
 ./mvnw versions:display-dependency-updates
 ```
 
-### Database Configuration
+### Build Commands (Billing Service)
 
-**H2 Console Access:**
+```bash
+cd billing-service
+
+# Clean build (compiles proto files automatically)
+./mvnw clean install
+
+# Skip tests
+./mvnw clean package -DskipTests
+
+# Run application
+./mvnw spring-boot:run
+```
+
+### Docker Commands
+
+```bash
+# Build Patient Service image
+cd patient-service
+docker build -t patient-service:latest .
+
+# Build Billing Service image
+cd billing-service
+docker build -t billing-service:latest .
+
+# View running containers
+docker ps
+
+# View logs
+docker logs patient-service
+docker logs billing-service
+
+# Stop containers
+docker stop patient-service billing-service
+
+# Remove containers
+docker rm patient-service billing-service
+```
+
+### Database Configuration (Patient Service)
+
+**H2 (Local Development):**
 - URL: `http://localhost:4000/h2-console`
 - JDBC URL: `jdbc:h2:mem:testdb`
 - Username: `admin_viewer`
 - Password: `password`
 
+**PostgreSQL (Production/Docker):**
+Configure via environment variables:
+```bash
+-e SPRING_DATASOURCE_URL=jdbc:postgresql://host:5432/db
+-e SPRING_DATASOURCE_USERNAME=user
+-e SPRING_DATASOURCE_PASSWORD=pass
+```
+
 **Data Initialization:**
 - Sample data loaded via `src/main/resources/data.sql`
 - Schema auto-generated by Hibernate (`spring.jpa.hibernate.ddl-auto=update`)
 - Data initialization mode: `spring.sql.init.mode=always`
+
+### gRPC Configuration
+
+**Billing Service (Server):**
+- gRPC Port: `9001`
+- Protocol: Plaintext (for internal network)
+- Configuration: `grpc.server.port=9001` in `application.properties`
+
+**Patient Service (Client):**
+- Server Address: Configurable via `billing.service.address` (default: localhost)
+- gRPC Port: Configurable via `billing.service.grpc.port` (default: 9001)
+- Connection: ManagedChannel with plaintext
+
+### Protocol Buffers and gRPC
+
+**Proto File Location:**
+- Billing Service: `src/main/proto/billing_service.proto` (source)
+- Patient Service: `src/main/proto/billing_service.proto` (client copy)
+
+**Code Generation:**
+Proto files are automatically compiled to Java classes during Maven build via `protobuf-maven-plugin`:
+```bash
+# Generated classes location
+target/generated-sources/protobuf/java/        # Message classes
+target/generated-sources/protobuf/grpc-java/   # gRPC service stubs
+```
+
+**Modifying Proto Files:**
+1. Edit `.proto` file in `billing-service/src/main/proto/`
+2. Rebuild billing-service: `./mvnw clean install`
+3. Copy updated proto file to patient-service (if client needs changes)
+4. Rebuild patient-service: `cd ../patient-service && ./mvnw clean install`
 
 ### Code Style
 
@@ -296,8 +513,13 @@ dev.toganbayev.patientservice/
 - **Validation Groups:** `CreatePatientValidationGroup` for create operations
 - **DTOs:** Separate Request/Response DTOs with validation constraints
 - **Exception Handling:** Centralized via `GlobalExceptionHandler` with `@ControllerAdvice`
+- **gRPC Services:** Use `@GrpcService` annotation for server, `ManagedChannel` for client
 
 ### Key Components
+
+**gRPC Integration:**
+- **BillingServiceGrpcClient** (`patient-service/grpc/`): Synchronous blocking stub for calling Billing Service
+- **BillingGrpcService** (`billing-service/grpc/`): Server-side gRPC service implementation with `@GrpcService`
 
 **PatientMapper** (`mapper/PatientMapper.java`)
 - Static utility methods for entity-DTO conversion
@@ -318,25 +540,50 @@ dev.toganbayev.patientservice/
 
 ## API Testing
 
+### Patient Service (REST API)
+
 Sample HTTP requests are available in `api-requests/patient-service/`:
-- `create-patient.http` - Create new patient
+- `create-patient.http` - Create new patient (triggers billing account creation)
 - `get-patients.http` - Get all patients
 - `update-patient.http` - Update existing patient
 - `delete-patient.http` - Delete patient
 
-Use these with IntelliJ IDEA HTTP Client or similar tools.
+Use these with IntelliJ IDEA HTTP Client, VSCode REST Client, or similar tools.
+
+### Billing Service (gRPC)
+
+Sample gRPC requests are available in `grpc-requests/billing-service/`.
+
+Test gRPC endpoints using tools like:
+- [grpcurl](https://github.com/fullstorydev/grpcurl) - Command-line gRPC client
+- [BloomRPC](https://github.com/bloomrpc/bloomrpc) - GUI client for gRPC
+- [Postman](https://www.postman.com/) - Supports gRPC (v9.0+)
 
 ## Roadmap
 
+### Completed Features ✅
+- [x] Microservices architecture with gRPC communication
+- [x] Patient Service REST API with CRUD operations
+- [x] Billing Service gRPC server
+- [x] Docker support with multi-stage builds
+- [x] OpenAPI/Swagger documentation (Patient Service)
+- [x] PostgreSQL support for production
+- [x] Protocol Buffers for service contracts
+
+### Planned Features
 - [ ] Add pagination and sorting for patient listing
 - [ ] Implement search functionality (by name, email)
 - [ ] Add patient medical history tracking
-- [ ] Implement authentication and authorization
+- [ ] Implement authentication and authorization (JWT/OAuth2)
 - [ ] Add comprehensive unit and integration tests
-- [ ] Migrate to production database (PostgreSQL/MySQL)
-- [ ] Add API documentation (Swagger/OpenAPI)
-- [ ] Implement audit logging
-- [ ] Add metrics and monitoring
+- [ ] Implement billing operations (invoices, payments)
+- [ ] Add service mesh (Istio/Linkerd) for production
+- [ ] Implement audit logging and event sourcing
+- [ ] Add metrics and monitoring (Prometheus/Grafana)
+- [ ] Implement API rate limiting
+- [ ] Add Docker Compose for multi-service orchestration
+- [ ] Implement circuit breakers (Resilience4j)
+- [ ] Add distributed tracing (Jaeger/Zipkin)
 
 ## Contributing
 
@@ -350,10 +597,6 @@ Contributions are welcome! Please follow these guidelines:
 6. Push to the branch (`git push origin feature/amazing-feature`)
 7. Open a Pull Request
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## Contact
 
 Toganbayev - [@toganbayev](https://github.com/toganbayev)
@@ -364,5 +607,11 @@ Project Link: [https://github.com/toganbayev/patient-management](https://github.
 
 - [Spring Boot](https://spring.io/projects/spring-boot) - Application framework
 - [Spring Data JPA](https://spring.io/projects/spring-data-jpa) - Data persistence
+- [gRPC](https://grpc.io/) - High-performance RPC framework
+- [Protocol Buffers](https://protobuf.dev/) - Language-neutral data serialization
+- [grpc-spring-boot-starter](https://github.com/yidongnan/grpc-spring-boot-starter) - gRPC Spring Boot integration
+- [SpringDoc OpenAPI](https://springdoc.org/) - API documentation
 - [H2 Database](https://www.h2database.com/) - In-memory database
+- [PostgreSQL](https://www.postgresql.org/) - Production database
+- [Docker](https://www.docker.com/) - Containerization platform
 - [Jakarta Bean Validation](https://beanvalidation.org/) - Validation framework
