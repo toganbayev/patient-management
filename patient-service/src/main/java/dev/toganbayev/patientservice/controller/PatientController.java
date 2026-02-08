@@ -4,6 +4,8 @@ import dev.toganbayev.patientservice.dto.PatientRequestDto;
 import dev.toganbayev.patientservice.dto.PatientResponseDto;
 import dev.toganbayev.patientservice.dto.validators.CreatePatientValidationGroup;
 import dev.toganbayev.patientservice.service.PatientService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.groups.Default;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -14,6 +16,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/patients")
+@Tag(name = "Patient", description = "API for managing Patients")
 public class PatientController {
     private final PatientService patientService;
 
@@ -22,6 +25,7 @@ public class PatientController {
     }
 
     @GetMapping
+    @Operation(summary = "Get Patients")
     public ResponseEntity<List<PatientResponseDto>> getAllPatients() {
         List<PatientResponseDto> patients = patientService.getPatients();
 
@@ -29,6 +33,7 @@ public class PatientController {
     }
 
     @PostMapping
+    @Operation(summary = "Create a new Patient")
     public ResponseEntity<PatientResponseDto> createPatient(@Validated({Default.class, CreatePatientValidationGroup.class}) @RequestBody PatientRequestDto patientRequestDto) {
         PatientResponseDto patientResponseDto = patientService.createPatient(patientRequestDto);
 
@@ -36,6 +41,7 @@ public class PatientController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Update a Patient")
     public ResponseEntity<PatientResponseDto> updatePatient(@PathVariable UUID id, @Validated({Default.class}) @RequestBody PatientRequestDto patientRequestDto) {
         PatientResponseDto patientResponseDto = patientService.updatePatient(id, patientRequestDto);
 
@@ -43,6 +49,7 @@ public class PatientController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete a Patient")
     public ResponseEntity<Void> deletePatient(@PathVariable UUID id) {
         patientService.deletePatient(id);
 
