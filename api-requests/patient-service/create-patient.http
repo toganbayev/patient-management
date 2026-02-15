@@ -3,10 +3,10 @@ POST http://localhost:4000/patients
 Content-Type: application/json
 
 {
-  "name": "Jermaine Lamarr Cole",
-  "email": "jcole@dreamville.com",
-  "address": "2014 Forest Hills Dr, Fayetteville, NC",
-  "dateOfBirth": "1985-01-28",
+  "name": "Sergio Giavanni Kitchens",
+  "email": "gunna@ysl.com",
+  "address": "College Park, Atlanta, GA",
+  "dateOfBirth": "1993-06-14",
   "registeredDate": "2024-11-28"
 }
 
