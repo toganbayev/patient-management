@@ -1,6 +1,7 @@
 # Patient Management System
 
-A Spring Boot microservices application for managing patient records and billing, featuring gRPC inter-service communication, RESTful APIs, and containerized deployment.
+A Spring Boot microservices application for managing patient records and billing, featuring gRPC inter-service
+communication, RESTful APIs, and containerized deployment.
 
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.10-brightgreen.svg)](https://spring.io/projects/spring-boot)
@@ -10,6 +11,7 @@ A Spring Boot microservices application for managing patient records and billing
 ## Features
 
 ### Patient Service
+
 - **Complete CRUD Operations** - RESTful API for patient record management
 - **Email Uniqueness** - Enforced at both database and service layers
 - **Smart Validation** - Validation groups for create vs. update operations
@@ -20,31 +22,50 @@ A Spring Boot microservices application for managing patient records and billing
 - **DTO Pattern** - Request/Response separation with validation constraints
 
 ### Billing Service
+
 - **gRPC Server** - High-performance RPC service for billing operations
 - **Protocol Buffers** - Strongly-typed service contracts
 - **Billing Account Creation** - Automated account provisioning via gRPC
 
+### API Gateway
+
+- **Single Entry Point** - Unified routing for all microservices
+- **Dynamic Routing** - Routes `/api/patients/**` to Patient Service and `/api-docs/patients` to OpenAPI documentation
+- **Spring Cloud Gateway** - Modern, non-blocking API gateway
+- **Port 4004** - Centralized access point
+
+### Analytics Service
+
+- **Event-Driven Architecture** - Kafka consumer for real-time analytics
+- **Protobuf Events** - Strongly-typed `PatientEvent` messages
+- **Patient Topic Subscription** - Consumes `patient` topic for analytics processing
+- **Scalable Processing** - Decoupled from core services via message broker
+
 ### Infrastructure
+
 - **Microservices Architecture** - Independent, scalable services
+- **Event-Driven Messaging** - Apache Kafka for asynchronous communication
 - **Docker Support** - Multi-stage builds with optimized images
-- **Inter-Service Communication** - gRPC for synchronous, type-safe communication
+- **Inter-Service Communication** - gRPC for synchronous calls, Kafka for async events
 - **Global Exception Handling** - Centralized error handling across services
 - **Sample Data** - Pre-loaded test data for quick development
 
 ## Technology Stack
 
-| Category | Technology |
-|----------|-----------|
-| **Language** | Java 21 (LTS) |
-| **Framework** | Spring Boot 3.5.10 |
-| **Inter-Service Communication** | gRPC 1.79.0 + Protocol Buffers 4.33.3 |
-| **gRPC Integration** | grpc-spring-boot-starter 3.1.0.RELEASE (net.devh) |
-| **Database** | H2 (development) / PostgreSQL (production) |
-| **ORM** | Spring Data JPA + Hibernate |
-| **Build Tool** | Maven with protobuf-maven-plugin |
-| **Containerization** | Docker with multi-stage builds |
-| **API Documentation** | SpringDoc OpenAPI 3 (v2.8.15) |
-| **Validation** | Jakarta Bean Validation |
+| Category                        | Technology                                        |
+|---------------------------------|---------------------------------------------------|
+| **Language**                    | Java 21 (LTS)                                     |
+| **Framework**                   | Spring Boot 3.5.10                                |
+| **API Gateway**                 | Spring Cloud Gateway                              |
+| **Inter-Service Communication** | gRPC 1.79.0 + Protocol Buffers 4.33.3             |
+| **gRPC Integration**            | grpc-spring-boot-starter 3.1.0.RELEASE (net.devh) |
+| **Message Broker**              | Apache Kafka                                      |
+| **Database**                    | H2 (development) / PostgreSQL (production)        |
+| **ORM**                         | Spring Data JPA + Hibernate                       |
+| **Build Tool**                  | Maven with protobuf-maven-plugin                  |
+| **Containerization**            | Docker with multi-stage builds                    |
+| **API Documentation**           | SpringDoc OpenAPI 3 (v2.8.15)                     |
+| **Validation**                  | Jakarta Bean Validation                           |
 
 ## Quick Start
 
@@ -57,35 +78,82 @@ A Spring Boot microservices application for managing patient records and billing
 ### Option 1: Local Development (Maven)
 
 #### 1. Clone the repository
+
 ```bash
 git clone <repository-url>
 cd patient-management
 ```
 
 #### 2. Start Billing Service (Port 9001)
+
 ```bash
 cd billing-service
 ./mvnw clean install
 ./mvnw spring-boot:run
 ```
 
-#### 3. Start Patient Service (Port 4000)
+#### 3. Start Kafka (Port 9092)
+
+Open a new terminal (requires Docker or local Kafka installation):
+
+```bash
+# Using Docker
+docker run -d --name kafka -p 9092:9092 -p 29092:29092 \
+  -e KAFKA_BROKER_ID=1 \
+  -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092 \
+  -e KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT \
+  -e KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT \
+  confluentinc/cp-kafka:latest
+
+# Or use local Kafka installation
+kafka-server-start.sh config/server.properties
+```
+
+#### 4. Start Patient Service (Port 4000)
+
 Open a new terminal:
+
 ```bash
 cd patient-service
 ./mvnw clean install
 ./mvnw spring-boot:run
 ```
 
+#### 5. Start Analytics Service (Port 4002)
+
+Open a new terminal:
+
+```bash
+cd analytics-service
+./mvnw clean install
+./mvnw spring-boot:run
+```
+
+#### 6. Start API Gateway (Port 4004)
+
+Open a new terminal:
+
+```bash
+cd api-gateway
+./mvnw clean install
+./mvnw spring-boot:run
+```
+
 **Services:**
+
+- API Gateway: `http://localhost:4004`
 - Patient Service REST API: `http://localhost:4000`
+- Patient Service via Gateway: `http://localhost:4004/api/patients`
 - Swagger UI: `http://localhost:4000/swagger-ui.html`
+- Swagger via Gateway: `http://localhost:4004/api-docs/patients`
 - H2 Console: `http://localhost:4000/h2-console`
 - Billing Service gRPC: `localhost:9001`
+- Kafka Broker: `localhost:9092`
 
 ### Option 2: Docker Deployment
 
 #### Build and run both services:
+
 ```bash
 # Build and start Billing Service
 cd billing-service
@@ -105,17 +173,20 @@ docker run -d --name patient-service -p 4000:4000 \
 ### Accessing Services
 
 **Patient Service:**
+
 - REST API: `http://localhost:4000/patients`
 - Swagger UI: `http://localhost:4000/swagger-ui.html`
 - OpenAPI Docs: `http://localhost:4000/v3/api-docs`
 
 **H2 Console** (Patient Service):
+
 - URL: `http://localhost:4000/h2-console`
 - JDBC URL: `jdbc:h2:mem:testdb`
 - Username: `admin_viewer`
 - Password: `password`
 
 **Billing Service:**
+
 - gRPC Server: `localhost:9001`
 - HTTP Port: `4001` (reserved for future use)
 
@@ -128,6 +199,7 @@ docker run -d --name patient-service -p 4000:4000 \
 **Endpoint:** `GET /patients`
 
 **Response (200 OK):**
+
 ```json
 [
   {
@@ -141,6 +213,7 @@ docker run -d --name patient-service -p 4000:4000 \
 ```
 
 **Example:**
+
 ```bash
 curl http://localhost:4000/patients
 ```
@@ -152,6 +225,7 @@ curl http://localhost:4000/patients
 **Note:** Creating a patient automatically triggers billing account creation via gRPC call to Billing Service.
 
 **Request Body:**
+
 ```json
 {
   "name": "Jane Smith",
@@ -163,6 +237,7 @@ curl http://localhost:4000/patients
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
@@ -174,6 +249,7 @@ curl http://localhost:4000/patients
 ```
 
 **Example:**
+
 ```bash
 curl -X POST http://localhost:4000/patients \
   -H "Content-Type: application/json" \
@@ -191,6 +267,7 @@ curl -X POST http://localhost:4000/patients \
 **Endpoint:** `PUT /patients/{id}`
 
 **Request Body:**
+
 ```json
 {
   "name": "Jane Smith Updated",
@@ -203,6 +280,7 @@ curl -X POST http://localhost:4000/patients \
 **Note:** `registeredDate` is not required for updates.
 
 **Response (200 OK):**
+
 ```json
 {
   "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
@@ -214,6 +292,7 @@ curl -X POST http://localhost:4000/patients \
 ```
 
 **Example:**
+
 ```bash
 curl -X PUT http://localhost:4000/patients/7c9e6679-7425-40de-944b-e07fc1f90ae7 \
   -H "Content-Type: application/json" \
@@ -232,6 +311,7 @@ curl -X PUT http://localhost:4000/patients/7c9e6679-7425-40de-944b-e07fc1f90ae7 
 **Response:** `204 No Content` (empty body)
 
 **Example:**
+
 ```bash
 curl -X DELETE http://localhost:4000/patients/7c9e6679-7425-40de-944b-e07fc1f90ae7
 ```
@@ -239,6 +319,7 @@ curl -X DELETE http://localhost:4000/patients/7c9e6679-7425-40de-944b-e07fc1f90a
 #### Error Handling
 
 **Patient Not Found (400 Bad Request):**
+
 ```json
 {
   "message": "Patient not found"
@@ -246,6 +327,7 @@ curl -X DELETE http://localhost:4000/patients/7c9e6679-7425-40de-944b-e07fc1f90a
 ```
 
 **Email Already Exists (400 Bad Request):**
+
 ```json
 {
   "message": "Email address already exists"
@@ -253,6 +335,7 @@ curl -X DELETE http://localhost:4000/patients/7c9e6679-7425-40de-944b-e07fc1f90a
 ```
 
 **Validation Error (400 Bad Request):**
+
 ```json
 {
   "email": "Email should be valid",
@@ -267,6 +350,7 @@ curl -X DELETE http://localhost:4000/patients/7c9e6679-7425-40de-944b-e07fc1f90a
 **RPC Method:** `CreateBillingAccount`
 
 **Request (BillingRequest):**
+
 ```protobuf
 message BillingRequest {
   string patientId = 1;
@@ -276,6 +360,7 @@ message BillingRequest {
 ```
 
 **Response (BillingResponse):**
+
 ```protobuf
 message BillingResponse {
   string accountId = 1;
@@ -285,34 +370,42 @@ message BillingResponse {
 
 **Protocol Buffer Definition:** `src/main/proto/billing_service.proto`
 
-**Note:** This service is called automatically by Patient Service when creating a new patient. Sample gRPC requests are available in `grpc-requests/billing-service/`.
+**Note:** This service is called automatically by Patient Service when creating a new patient. Sample gRPC requests are
+available in `grpc-requests/billing-service/`.
 
 ## Architecture
 
 ### Microservices Overview
 
 ```
-┌─────────────────────────────────┐         ┌─────────────────────────────────┐
-│      Patient Service            │         │      Billing Service            │
-│                                 │         │                                 │
-│  REST API (Port 4000)           │  gRPC   │  gRPC Server (Port 9001)        │
-│  ┌──────────────────────┐       │ ──────> │  ┌──────────────────────┐      │
-│  │ PatientController    │       │         │  │ BillingGrpcService   │      │
-│  └──────────┬───────────┘       │         │  └──────────────────────┘      │
-│             │                   │         │                                 │
-│  ┌──────────▼───────────┐       │         │  HTTP (Port 4001)               │
-│  │ PatientService       │       │         │                                 │
-│  │ + BillingGrpcClient  │       │         └─────────────────────────────────┘
-│  └──────────┬───────────┘       │
-│             │                   │
-│  ┌──────────▼───────────┐       │
-│  │ PatientRepository    │       │
-│  └──────────────────────┘       │
-│             │                   │
-│  ┌──────────▼───────────┐       │
-│  │ H2 / PostgreSQL DB   │       │
-│  └──────────────────────┘       │
-└─────────────────────────────────┘
+                            ┌─────────────────────┐
+                            │   API Gateway       │
+                            │  (Port 4004)        │
+                            │Spring Cloud Gateway │
+                            └──────────┬──────────┘
+                                       │
+                    ┌──────────────────┼──────────────────┐
+                    │                  │                  │
+        ┌───────────▼─────────┐   gRPC │       ┌──────────▼───────────┐
+        │ Patient Service     │        │       │ Billing Service      │
+        │   (Port 4000)       │        │       │   (Port 9001)        │
+        │ REST API + Kafka    │        └──────>│  gRPC Server         │
+        │ Producer            │                │                      │
+        └───────┬──────┬──────┘                └──────────────────────┘
+                │      │
+                │      └──────────────┐
+                │                     │
+        ┌───────▼──────────┐    ┌─────▼──────────────────┐
+        │ H2/PostgreSQL    │    │   Kafka Broker         │
+        │    Database      │    │   (Port 9092)          │
+        │  (Patient data)  │    │  patient topic         │
+        └──────────────────┘    └─────┬──────────────────┘
+                                      │
+                            ┌─────────▼──────────┐
+                            │ Analytics Service  │
+                            │  (Port 4002)       │
+                            │ Kafka Consumer     │
+                            └────────────────────┘
 ```
 
 ### Patient Service - Layered Architecture
@@ -327,7 +420,7 @@ Controller → Service → Repository → Entity
 
 ```
 patient-management/
-├── patient-service/                 # Patient management REST API
+├── patient-service/                 # Patient management REST API + Kafka Producer
 │   ├── src/main/
 │   │   ├── java/dev/toganbayev/patientservice/
 │   │   │   ├── controller/         # REST controllers
@@ -337,6 +430,7 @@ patient-management/
 │   │   │   ├── dto/                # Request/Response DTOs
 │   │   │   ├── mapper/             # Entity-DTO mappers
 │   │   │   ├── grpc/               # gRPC client
+│   │   │   ├── kafka/              # Kafka producer
 │   │   │   ├── exception/          # Custom exceptions
 │   │   │   └── validation/         # Validation groups
 │   │   ├── proto/                  # Protocol buffer definitions
@@ -349,6 +443,26 @@ patient-management/
 │   ├── src/main/
 │   │   ├── java/dev/toganbayev/billingservice/
 │   │   │   └── grpc/               # gRPC service implementation
+│   │   ├── proto/                  # Protocol buffer definitions
+│   │   └── resources/
+│   │       └── application.properties
+│   ├── Dockerfile
+│   └── pom.xml
+├── api-gateway/                    # API Gateway with Spring Cloud Gateway
+│   ├── src/main/
+│   │   ├── java/dev/toganbayev/apigateway/
+│   │   │   ├── config/             # Gateway routing configuration
+│   │   │   └── filter/             # Custom gateway filters
+│   │   └── resources/
+│   │       └── application.properties
+│   ├── Dockerfile
+│   └── pom.xml
+├── analytics-service/              # Analytics Service with Kafka Consumer
+│   ├── src/main/
+│   │   ├── java/dev/toganbayev/analyticsservice/
+│   │   │   ├── kafka/              # Kafka consumer and listeners
+│   │   │   ├── service/            # Analytics business logic
+│   │   │   └── model/              # Analytics models
 │   │   ├── proto/                  # Protocol buffer definitions
 │   │   └── resources/
 │   │       └── application.properties
@@ -457,6 +571,7 @@ docker rm patient-service billing-service
 ### Database Configuration (Patient Service)
 
 **H2 (Local Development):**
+
 - URL: `http://localhost:4000/h2-console`
 - JDBC URL: `jdbc:h2:mem:testdb`
 - Username: `admin_viewer`
@@ -464,6 +579,7 @@ docker rm patient-service billing-service
 
 **PostgreSQL (Production/Docker):**
 Configure via environment variables:
+
 ```bash
 -e SPRING_DATASOURCE_URL=jdbc:postgresql://host:5432/db
 -e SPRING_DATASOURCE_USERNAME=user
@@ -471,6 +587,7 @@ Configure via environment variables:
 ```
 
 **Data Initialization:**
+
 - Sample data loaded via `src/main/resources/data.sql`
 - Schema auto-generated by Hibernate (`spring.jpa.hibernate.ddl-auto=update`)
 - Data initialization mode: `spring.sql.init.mode=always`
@@ -478,11 +595,13 @@ Configure via environment variables:
 ### gRPC Configuration
 
 **Billing Service (Server):**
+
 - gRPC Port: `9001`
 - Protocol: Plaintext (for internal network)
 - Configuration: `grpc.server.port=9001` in `application.properties`
 
 **Patient Service (Client):**
+
 - Server Address: Configurable via `billing.service.address` (default: localhost)
 - gRPC Port: Configurable via `billing.service.grpc.port` (default: 9001)
 - Connection: ManagedChannel with plaintext
@@ -490,11 +609,13 @@ Configure via environment variables:
 ### Protocol Buffers and gRPC
 
 **Proto File Location:**
+
 - Billing Service: `src/main/proto/billing_service.proto` (source)
 - Patient Service: `src/main/proto/billing_service.proto` (client copy)
 
 **Code Generation:**
 Proto files are automatically compiled to Java classes during Maven build via `protobuf-maven-plugin`:
+
 ```bash
 # Generated classes location
 target/generated-sources/protobuf/java/        # Message classes
@@ -502,6 +623,7 @@ target/generated-sources/protobuf/grpc-java/   # gRPC service stubs
 ```
 
 **Modifying Proto Files:**
+
 1. Edit `.proto` file in `billing-service/src/main/proto/`
 2. Rebuild billing-service: `./mvnw clean install`
 3. Copy updated proto file to patient-service (if client needs changes)
@@ -518,23 +640,28 @@ target/generated-sources/protobuf/grpc-java/   # gRPC service stubs
 ### Key Components
 
 **gRPC Integration:**
+
 - **BillingServiceGrpcClient** (`patient-service/grpc/`): Synchronous blocking stub for calling Billing Service
 - **BillingGrpcService** (`billing-service/grpc/`): Server-side gRPC service implementation with `@GrpcService`
 
 **PatientMapper** (`mapper/PatientMapper.java`)
+
 - Static utility methods for entity-DTO conversion
 - Handles date string parsing (LocalDate ↔ String)
 
 **GlobalExceptionHandler** (`exception/GlobalExceptionHandler.java`)
+
 - Centralized error handling with `@ControllerAdvice`
 - Custom exceptions: `EmailAlreadyExistsException`, `PatientNotFoundException`
 - Returns structured JSON error responses
 
 **Validation Groups** (`dto/validators/CreatePatientValidationGroup.java`)
+
 - Distinguishes between create (requires `registeredDate`) and update operations
 - Applied via `@Validated` annotation on controller methods
 
 **Email Uniqueness**
+
 - Database constraint on `Patient` entity
 - Service-level checks via `existsByEmail()` and `existsByEmailAndIdNot()`
 
@@ -543,6 +670,7 @@ target/generated-sources/protobuf/grpc-java/   # gRPC service stubs
 ### Patient Service (REST API)
 
 Sample HTTP requests are available in `api-requests/patient-service/`:
+
 - `create-patient.http` - Create new patient (triggers billing account creation)
 - `get-patients.http` - Get all patients
 - `update-patient.http` - Update existing patient
@@ -555,6 +683,7 @@ Use these with IntelliJ IDEA HTTP Client, VSCode REST Client, or similar tools.
 Sample gRPC requests are available in `grpc-requests/billing-service/`.
 
 Test gRPC endpoints using tools like:
+
 - [grpcurl](https://github.com/fullstorydev/grpcurl) - Command-line gRPC client
 - [BloomRPC](https://github.com/bloomrpc/bloomrpc) - GUI client for gRPC
 - [Postman](https://www.postman.com/) - Supports gRPC (v9.0+)
@@ -562,6 +691,7 @@ Test gRPC endpoints using tools like:
 ## Roadmap
 
 ### Completed Features ✅
+
 - [x] Microservices architecture with gRPC communication
 - [x] Patient Service REST API with CRUD operations
 - [x] Billing Service gRPC server
@@ -569,8 +699,12 @@ Test gRPC endpoints using tools like:
 - [x] OpenAPI/Swagger documentation (Patient Service)
 - [x] PostgreSQL support for production
 - [x] Protocol Buffers for service contracts
+- [x] Apache Kafka integration (Producer in Patient Service, Consumer in Analytics Service)
+- [x] API Gateway with Spring Cloud Gateway
+- [x] Analytics Service for event-driven analytics
 
 ### Planned Features
+
 - [ ] Add pagination and sorting for patient listing
 - [ ] Implement search functionality (by name, email)
 - [ ] Add patient medical history tracking
