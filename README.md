@@ -472,7 +472,6 @@ patient-management/
 │   └── patient-service/
 ├── grpc-requests/                  # Sample gRPC requests
 │   └── billing-service/
-├── CLAUDE.md                       # Development guidelines
 └── README.md                       # This file
 ```
 
