@@ -229,11 +229,18 @@ docker run -d --name patient-service -p 4000:4000 \
 ```json
 [
   {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "name": "John Doe",
-    "email": "john.doe@example.com",
-    "address": "123 Main St",
-    "dateOfBirth": "1990-05-15"
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "name": "Marshall Bruce Mathers III",
+    "email": "eminem@raplegends.com",
+    "address": "19946 Dresden St, Detroit, MI",
+    "dateOfBirth": "1972-10-17"
+  },
+  {
+    "id": "123e4567-e89b-12d3-a456-426614174001",
+    "name": "Shawn Corey Carter",
+    "email": "jayz@rocnation.com",
+    "address": "560 State St, Brooklyn, NY",
+    "dateOfBirth": "1969-12-04"
   }
 ]
 ```
@@ -254,11 +261,11 @@ curl http://localhost:4000/patients
 
 ```json
 {
-  "name": "Jane Smith",
-  "email": "jane.smith@example.com",
-  "address": "456 Oak Avenue",
-  "dateOfBirth": "1985-03-20",
-  "registeredDate": "2024-02-08"
+  "name": "Kendrick Lamar Duckworth",
+  "email": "kdot@tde.com",
+  "address": "1567 W Rosecrans Ave, Compton, CA",
+  "dateOfBirth": "1987-06-17",
+  "registeredDate": "2024-02-15"
 }
 ```
 
@@ -266,11 +273,11 @@ curl http://localhost:4000/patients
 
 ```json
 {
-  "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
-  "name": "Jane Smith",
-  "email": "jane.smith@example.com",
-  "address": "456 Oak Avenue",
-  "dateOfBirth": "1985-03-20"
+  "id": "223e4567-e89b-12d3-a456-426614174005",
+  "name": "Kendrick Lamar Duckworth",
+  "email": "kdot@tde.com",
+  "address": "1567 W Rosecrans Ave, Compton, CA",
+  "dateOfBirth": "1987-06-17"
 }
 ```
 
@@ -280,11 +287,11 @@ curl http://localhost:4000/patients
 curl -X POST http://localhost:4000/patients \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "Jane Smith",
-    "email": "jane.smith@example.com",
-    "address": "456 Oak Avenue",
-    "dateOfBirth": "1985-03-20",
-    "registeredDate": "2024-02-08"
+    "name": "Kendrick Lamar Duckworth",
+    "email": "kdot@tde.com",
+    "address": "1567 W Rosecrans Ave, Compton, CA",
+    "dateOfBirth": "1987-06-17",
+    "registeredDate": "2024-02-15"
   }'
 ```
 
@@ -296,10 +303,10 @@ curl -X POST http://localhost:4000/patients \
 
 ```json
 {
-  "name": "Jane Smith Updated",
-  "email": "jane.updated@example.com",
-  "address": "789 New Street",
-  "dateOfBirth": "1985-03-20"
+  "name": "Kendrick Lamar Duckworth",
+  "email": "kdot@tde.com",
+  "address": "333 S Hope St, Los Angeles, CA",
+  "dateOfBirth": "1987-06-17"
 }
 ```
 
@@ -309,24 +316,24 @@ curl -X POST http://localhost:4000/patients \
 
 ```json
 {
-  "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
-  "name": "Jane Smith Updated",
-  "email": "jane.updated@example.com",
-  "address": "789 New Street",
-  "dateOfBirth": "1985-03-20"
+  "id": "223e4567-e89b-12d3-a456-426614174005",
+  "name": "Kendrick Lamar Duckworth",
+  "email": "kdot@tde.com",
+  "address": "333 S Hope St, Los Angeles, CA",
+  "dateOfBirth": "1987-06-17"
 }
 ```
 
 **Example:**
 
 ```bash
-curl -X PUT http://localhost:4000/patients/7c9e6679-7425-40de-944b-e07fc1f90ae7 \
+curl -X PUT http://localhost:4000/patients/223e4567-e89b-12d3-a456-426614174005 \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "Jane Smith Updated",
-    "email": "jane.updated@example.com",
-    "address": "789 New Street",
-    "dateOfBirth": "1985-03-20"
+    "name": "Kendrick Lamar Duckworth",
+    "email": "kdot@tde.com",
+    "address": "333 S Hope St, Los Angeles, CA",
+    "dateOfBirth": "1987-06-17"
   }'
 ```
 
@@ -339,7 +346,7 @@ curl -X PUT http://localhost:4000/patients/7c9e6679-7425-40de-944b-e07fc1f90ae7 
 **Example:**
 
 ```bash
-curl -X DELETE http://localhost:4000/patients/7c9e6679-7425-40de-944b-e07fc1f90ae7
+curl -X DELETE http://localhost:4000/patients/223e4567-e89b-12d3-a456-426614174005
 ```
 
 #### Error Handling
@@ -410,7 +417,7 @@ available in `grpc-requests/billing-service/`.
 ┌───────────────────────────────────────────────────────────┐
 │                     API Gateway (4004)                    │
 │                     Spring Cloud GW                       │
-└──────┬──────────────────────┬───────────────────┬─────────┘
+└──────┬──────────────────────┬────────────────────┬────────┘
        │ /api/patients/**     │ /auth/**           │ /api-docs/**
        ▼                      ▼                    ▼
 ┌──────────────┐    ┌──────────────────┐    (pass-through
@@ -420,7 +427,7 @@ available in `grpc-requests/billing-service/`.
 │  JPA/H2/PG   │    │  JPA/H2          │
 └──────┬───────┘    └──────────────────┘
        │
-       ├─── gRPC ──────────────────────────────────────────┐
+       ├─── gRPC ───────────────────────────────────────────┐
        │                                                    ▼
        │                                        ┌──────────────────┐
        │                                        │  Billing Service │
