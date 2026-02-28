@@ -41,6 +41,15 @@ communication, RESTful APIs, and containerized deployment.
 - **Patient Topic Subscription** - Consumes `patient` topic for analytics processing
 - **Scalable Processing** - Decoupled from core services via message broker
 
+### Auth Service
+
+- **JWT Authentication** - Stateless authentication using JSON Web Tokens
+- **Spring Security** - Secured endpoints with role-based access control
+- **User Management** - User entity with JPA/H2 persistence
+- **Login Endpoint** - POST `/auth/login` returns signed JWT token
+- **Pre-loaded Users** - Sample users via `data.sql` for quick testing
+- **Port 4005** - Dedicated auth service port
+
 ### Infrastructure
 
 - **Microservices Architecture** - Independent, scalable services
@@ -66,6 +75,7 @@ communication, RESTful APIs, and containerized deployment.
 | **Containerization**            | Docker with multi-stage builds                    |
 | **API Documentation**           | SpringDoc OpenAPI 3 (v2.8.15)                     |
 | **Validation**                  | Jakarta Bean Validation                           |
+| **Authentication**              | Spring Security + JJWT                            |
 
 ## Quick Start
 
@@ -119,7 +129,7 @@ cd patient-service
 ./mvnw spring-boot:run
 ```
 
-#### 5. Start Analytics Service (Port 4002)
+#### 5. Start Analytics Service (Port 8080)
 
 Open a new terminal:
 
@@ -129,7 +139,17 @@ cd analytics-service
 ./mvnw spring-boot:run
 ```
 
-#### 6. Start API Gateway (Port 4004)
+#### 6. Start Auth Service (Port 4005)
+
+Open a new terminal:
+
+```bash
+cd auth-service
+./mvnw clean install
+./mvnw spring-boot:run
+```
+
+#### 7. Start API Gateway (Port 4004)
 
 Open a new terminal:
 
@@ -142,6 +162,7 @@ cd api-gateway
 **Services:**
 
 - API Gateway: `http://localhost:4004`
+- Auth Service: `http://localhost:4005`
 - Patient Service REST API: `http://localhost:4000`
 - Patient Service via Gateway: `http://localhost:4004/api/patients`
 - Swagger UI: `http://localhost:4000/swagger-ui.html`
@@ -184,6 +205,11 @@ docker run -d --name patient-service -p 4000:4000 \
 - JDBC URL: `jdbc:h2:mem:testdb`
 - Username: `admin_viewer`
 - Password: `password`
+
+**Auth Service:**
+
+- Login Endpoint: `http://localhost:4005/auth/login`
+- Default Credentials: `admin` / `admin123` (from `data.sql`)
 
 **Billing Service:**
 
@@ -378,34 +404,51 @@ available in `grpc-requests/billing-service/`.
 ### Microservices Overview
 
 ```
-                            ┌─────────────────────┐
-                            │   API Gateway       │
-                            │  (Port 4004)        │
-                            │Spring Cloud Gateway │
-                            └──────────┬──────────┘
-                                       │
-                    ┌──────────────────┼──────────────────┐
-                    │                  │                  │
-        ┌───────────▼─────────┐   gRPC │       ┌──────────▼───────────┐
-        │ Patient Service     │        │       │ Billing Service      │
-        │   (Port 4000)       │        │       │   (Port 9001)        │
-        │ REST API + Kafka    │        └──────>│  gRPC Server         │
-        │ Producer            │                │                      │
-        └───────┬──────┬──────┘                └──────────────────────┘
-                │      │
-                │      └──────────────┐
-                │                     │
-        ┌───────▼──────────┐    ┌─────▼──────────────────┐
-        │ H2/PostgreSQL    │    │   Kafka Broker         │
-        │    Database      │    │   (Port 9092)          │
-        │  (Patient data)  │    │  patient topic         │
-        └──────────────────┘    └─────┬──────────────────┘
-                                      │
-                            ┌─────────▼──────────┐
-                            │ Analytics Service  │
-                            │  (Port 4002)       │
-                            │ Kafka Consumer     │
-                            └────────────────────┘
+  Client
+    │
+    ▼
+┌───────────────────────────────────────────────────────────┐
+│                     API Gateway (4004)                    │
+│                     Spring Cloud GW                       │
+└──────┬──────────────────────┬───────────────────┬─────────┘
+       │ /api/patients/**     │ /auth/**           │ /api-docs/**
+       ▼                      ▼                    ▼
+┌──────────────┐    ┌──────────────────┐    (pass-through
+│ Patient Svc  │    │   Auth Service   │     to Patient Svc)
+│  (4000)      │    │   (4005)         │
+│  REST API    │    │  JWT + Security  │
+│  JPA/H2/PG   │    │  JPA/H2          │
+└──────┬───────┘    └──────────────────┘
+       │
+       ├─── gRPC ──────────────────────────────────────────┐
+       │                                                    ▼
+       │                                        ┌──────────────────┐
+       │                                        │  Billing Service │
+       │                                        │  gRPC (9001)     │
+       │                                        │  HTTP (4001)     │
+       │                                        └──────────────────┘
+       │
+       ├─── JPA ────────────────────────────────────────────┐
+       │                                                    ▼
+       │                                        ┌──────────────────┐
+       │                                        │  H2 / PostgreSQL │
+       │                                        │  (Patient DB)    │
+       │                                        └──────────────────┘
+       │
+       └─── Kafka publish ──────────────────────────────────┐
+                                                            ▼
+                                                ┌──────────────────┐
+                                                │  Kafka Broker    │
+                                                │  (9092)          │
+                                                │  topic: patient  │
+                                                └────────┬─────────┘
+                                                         │ consume
+                                                         ▼
+                                                ┌──────────────────┐
+                                                │Analytics Service │
+                                                │  (8080)          │
+                                                │  Kafka Consumer  │
+                                                └──────────────────┘
 ```
 
 ### Patient Service - Layered Architecture
@@ -451,25 +494,37 @@ patient-management/
 ├── api-gateway/                    # API Gateway with Spring Cloud Gateway
 │   ├── src/main/
 │   │   ├── java/dev/toganbayev/apigateway/
-│   │   │   ├── config/             # Gateway routing configuration
-│   │   │   └── filter/             # Custom gateway filters
 │   │   └── resources/
-│   │       └── application.properties
+│   │       └── application.yml
 │   ├── Dockerfile
 │   └── pom.xml
 ├── analytics-service/              # Analytics Service with Kafka Consumer
 │   ├── src/main/
 │   │   ├── java/dev/toganbayev/analyticsservice/
-│   │   │   ├── kafka/              # Kafka consumer and listeners
-│   │   │   ├── service/            # Analytics business logic
-│   │   │   └── model/              # Analytics models
+│   │   │   └── kafka/              # Kafka consumer and listeners
 │   │   ├── proto/                  # Protocol buffer definitions
 │   │   └── resources/
 │   │       └── application.properties
 │   ├── Dockerfile
 │   └── pom.xml
+├── auth-service/                   # Auth Service with JWT Authentication
+│   ├── src/main/
+│   │   ├── java/dev/toganbayev/authservice/
+│   │   │   ├── controller/         # Auth endpoints
+│   │   │   ├── service/            # Authentication business logic
+│   │   │   ├── config/             # Spring Security configuration
+│   │   │   ├── model/              # JPA entities
+│   │   │   ├── repository/         # JPA repositories
+│   │   │   ├── dto/                # Request/Response DTOs
+│   │   │   └── util/               # JWT utility functions
+│   │   └── resources/
+│   │       ├── application.properties
+│   │       └── data.sql            # Pre-loaded users
+│   ├── Dockerfile
+│   └── pom.xml
 ├── api-requests/                   # Sample HTTP requests
-│   └── patient-service/
+│   ├── patient-service/
+│   └── auth-service/
 ├── grpc-requests/                  # Sample gRPC requests
 │   └── billing-service/
 └── README.md                       # This file
@@ -701,13 +756,13 @@ Test gRPC endpoints using tools like:
 - [x] Apache Kafka integration (Producer in Patient Service, Consumer in Analytics Service)
 - [x] API Gateway with Spring Cloud Gateway
 - [x] Analytics Service for event-driven analytics
+- [x] Authentication and authorization with Auth Service (JWT/Spring Security)
 
 ### Planned Features
 
 - [ ] Add pagination and sorting for patient listing
 - [ ] Implement search functionality (by name, email)
 - [ ] Add patient medical history tracking
-- [ ] Implement authentication and authorization (JWT/OAuth2)
 - [ ] Add comprehensive unit and integration tests
 - [ ] Implement billing operations (invoices, payments)
 - [ ] Add service mesh (Istio/Linkerd) for production
