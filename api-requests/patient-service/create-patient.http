@@ -3,10 +3,10 @@ POST http://localhost:4000/patients
 Content-Type: application/json
 
 {
-  "name": "Sergio Giavanni Kitchens",
-  "email": "gunna@ysl.com",
-  "address": "College Park, Atlanta, GA",
-  "dateOfBirth": "1993-06-14",
+  "name": "Rakim Mayers",
+  "email": "rakim@flacko.com",
+  "address": "Harlem, New York, NY",
+  "dateOfBirth": "1988-10-03",
   "registeredDate": "2024-11-28"
 }
 
