@@ -4,7 +4,7 @@ A Spring Boot microservices application for managing patient records and billing
 communication, RESTful APIs, and containerized deployment.
 
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://www.oracle.com/java/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.10-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.11-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![gRPC](https://img.shields.io/badge/gRPC-1.79.0-blue.svg)](https://grpc.io/)
 [![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED.svg)](https://www.docker.com/)
 
@@ -66,7 +66,7 @@ communication, RESTful APIs, and containerized deployment.
 | Category                        | Technology                                        |
 |---------------------------------|---------------------------------------------------|
 | **Language**                    | Java 21 (LTS)                                     |
-| **Framework**                   | Spring Boot 3.5.10                                |
+| **Framework**                   | Spring Boot 3.5.11                                |
 | **API Gateway**                 | Spring Cloud Gateway                              |
 | **Inter-Service Communication** | gRPC 1.79.0 + Protocol Buffers 4.33.3             |
 | **gRPC Integration**            | grpc-spring-boot-starter 3.1.0.RELEASE (net.devh) |
