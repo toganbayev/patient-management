@@ -31,7 +31,6 @@ communication, RESTful APIs, and containerized deployment.
 
 - **Single Entry Point** - Unified routing for all microservices
 - **Dynamic Routing** - Routes `/api/patients/**` to Patient Service and `/api-docs/patients` to OpenAPI documentation
-- **JWT Validation Filter** - `JwtValidationGatewayFilterFactory` validates Bearer tokens via auth-service `/validate` before forwarding; returns 401 if missing or invalid
 - **Spring Cloud Gateway** - Modern, non-blocking API gateway
 - **Port 4004** - Centralized access point
 
@@ -48,7 +47,6 @@ communication, RESTful APIs, and containerized deployment.
 - **Spring Security** - Secured endpoints with role-based access control
 - **User Management** - User entity with JPA/H2 persistence
 - **Login Endpoint** - POST `/auth/login` returns signed JWT token
-- **Validate Endpoint** - GET `/auth/validate` — validates Bearer token; used by API Gateway filter
 - **Pre-loaded Users** - Sample users via `data.sql` for quick testing
 - **Port 4005** - Dedicated auth service port
 
@@ -408,42 +406,6 @@ message BillingResponse {
 **Note:** This service is called automatically by Patient Service when creating a new patient. Sample gRPC requests are
 available in `grpc-requests/billing-service/`.
 
-### Auth Service REST API
-
-#### Login
-
-```
-POST /auth/login
-```
-
-**Request:**
-
-```json
-{
-  "username": "admin",
-  "password": "password"
-}
-```
-
-**Response `200 OK`:**
-
-```json
-{
-  "token": "<JWT>"
-}
-```
-
-#### Validate Token
-
-```
-GET /auth/validate
-Authorization: Bearer <token>
-```
-
-**Response:** `200 OK` if token is valid, `401 Unauthorized` if missing or invalid.
-
-**Note:** This endpoint is called automatically by the API Gateway `JwtValidationGatewayFilterFactory` on every request to `/api/patients/**`. Sample requests are available in `api-requests/auth-service/`.
-
 ## Architecture
 
 ### Microservices Overview
@@ -457,21 +419,13 @@ Authorization: Bearer <token>
 │                     Spring Cloud GW                       │
 └──────┬──────────────────────┬────────────────────┬────────┘
        │ /api/patients/**     │ /auth/**           │ /api-docs/**
-       │ (JWT filter)         ▼                    ▼
-       │              ┌──────────────────┐    (pass-through
-       │   validate → │   Auth Service   │     to Patient Svc)
-       │   token      │   (4005)         │
-       │   GET        │  JWT + Security  │
-       │   /validate  │  JPA/H2          │
-       │              └──────────────────┘
-       │ if valid
-       ▼
-┌──────────────┐
-│ Patient Svc  │
-│  (4000)      │
-│  REST API    │
-│  JPA/H2/PG   │
-└──────┬───────┘
+       ▼                      ▼                    ▼
+┌──────────────┐    ┌──────────────────┐    (pass-through
+│ Patient Svc  │    │   Auth Service   │     to Patient Svc)
+│  (4000)      │    │   (4005)         │
+│  REST API    │    │  JWT + Security  │
+│  JPA/H2/PG   │    │  JPA/H2          │
+└──────┬───────┘    └──────────────────┘
        │
        ├─── gRPC ───────────────────────────────────────────┐
        │                                                    ▼
