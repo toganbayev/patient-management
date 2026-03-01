@@ -5,7 +5,12 @@ communication, RESTful APIs, and containerized deployment.
 
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.11-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2025.0.0-brightgreen.svg)](https://spring.io/projects/spring-cloud)
 [![gRPC](https://img.shields.io/badge/gRPC-1.79.0-blue.svg)](https://grpc.io/)
+[![Protobuf](https://img.shields.io/badge/Protobuf-4.33.3-blue.svg)](https://protobuf.dev/)
+[![Kafka](https://img.shields.io/badge/Apache%20Kafka-Enabled-231F20.svg)](https://kafka.apache.org/)
+[![JWT](https://img.shields.io/badge/JWT-JJWT%200.12.6-black.svg)](https://github.com/jwtk/jjwt)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supported-4169E1.svg)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED.svg)](https://www.docker.com/)
 
 ## Features
@@ -31,7 +36,8 @@ communication, RESTful APIs, and containerized deployment.
 
 - **Single Entry Point** - Unified routing for all microservices
 - **Dynamic Routing** - Routes `/api/patients/**` to Patient Service and `/api-docs/patients` to OpenAPI documentation
-- **JWT Validation Filter** - `JwtValidationGatewayFilterFactory` validates Bearer tokens via auth-service `/validate` before forwarding; returns 401 if missing or invalid
+- **JWT Validation Filter** - `JwtValidationGatewayFilterFactory` validates Bearer tokens via auth-service `/validate`
+  before forwarding; returns 401 if missing or invalid
 - **Spring Cloud Gateway** - Modern, non-blocking API gateway
 - **Port 4004** - Centralized access point
 
@@ -442,7 +448,8 @@ Authorization: Bearer <token>
 
 **Response:** `200 OK` if token is valid, `401 Unauthorized` if missing or invalid.
 
-**Note:** This endpoint is called automatically by the API Gateway `JwtValidationGatewayFilterFactory` on every request to `/api/patients/**`. Sample requests are available in `api-requests/auth-service/`.
+**Note:** This endpoint is called automatically by the API Gateway `JwtValidationGatewayFilterFactory` on every request
+to `/api/patients/**`. Sample requests are available in `api-requests/auth-service/`.
 
 ## Architecture
 
@@ -516,7 +523,7 @@ Controller → Service → Repository → Entity
 
 ```
 patient-management/
-├── patient-service/                 # Patient management REST API + Kafka Producer
+├── patient-service/                # Patient management REST API + Kafka Producer
 │   ├── src/main/
 │   │   ├── java/dev/toganbayev/patientservice/
 │   │   │   ├── controller/         # REST controllers
