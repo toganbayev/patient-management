@@ -929,7 +929,7 @@ Test gRPC endpoints using tools like:
 
 ## Roadmap
 
-### Completed Features ✅
+### Completed Features
 
 - [x] Microservices architecture with gRPC communication
 - [x] Patient Service REST API with CRUD operations
@@ -944,13 +944,13 @@ Test gRPC endpoints using tools like:
 - [x] Authentication and authorization with Auth Service (JWT/Spring Security)
 - [x] AWS CDK infrastructure definition (VPC, RDS, MSK, ECS Fargate, ALB)
 - [x] LocalStack local cloud deployment with `localstack-deploy.sh`
+- [x] Integration tests for Auth and Patient services (`integration-tests/`)
 
 ### Planned Features
 
 - [ ] Add pagination and sorting for patient listing
 - [ ] Implement search functionality (by name, email)
 - [ ] Add patient medical history tracking
-- [x] Integration tests for Auth and Patient services (`integration-tests/`)
 - [ ] Implement billing operations (invoices, payments)
 - [ ] Add service mesh (Istio/Linkerd) for production
 - [ ] Implement audit logging and event sourcing
