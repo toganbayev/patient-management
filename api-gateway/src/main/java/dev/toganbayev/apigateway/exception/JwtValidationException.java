@@ -1,4 +1,4 @@
-package dev.toganbayev.apigateway.esception;
+package dev.toganbayev.apigateway.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;

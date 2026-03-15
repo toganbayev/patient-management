@@ -8,8 +8,8 @@ spring:
         webflux:
           routes:
             ## REST-CLIENT -> http://localhost:4004/auth/login
-            ## API GATEWAY -> http://aith-service:4005/login
-            - id: aith-service-route
+            ## API GATEWAY -> http://auth-service:4005/login
+            - id: auth-service-route
               uri: http://auth-service:4005
               predicates:
                 - Path=/auth/**
@@ -35,3 +35,10 @@ spring:
                 - Path=/api-docs/patients
               filters:
                 - RewritePath=/api-docs/patients,/v3/api-docs
+
+            - id: api-docs-auth-route
+              uri: http://auth-service:4005
+              predicates:
+                - Path=/api-docs/auth
+              filters:
+                - RewritePath=/api-docs/auth,/v3/api-docs
