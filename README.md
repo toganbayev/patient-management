@@ -582,6 +582,14 @@ patient-management/
 │   │       └── data.sql            # Pre-loaded users
 │   ├── Dockerfile
 │   └── pom.xml
+├── integration-tests/              # Integration Tests for Auth + Patient Services
+│   ├── src/test/
+│   │   ├── java/
+│   │   │   ├── AuthIntegrationTest.java       # Auth service integration tests
+│   │   │   └── PatientIntegrationTest.java    # Patient service integration tests
+│   │   └── resources/
+│   │       └── application.properties
+│   └── pom.xml
 ├── api-requests/                   # Sample HTTP requests
 │   ├── patient-service/
 │   └── auth-service/
@@ -617,6 +625,19 @@ cd billing-service
 
 # Package without running tests
 ./mvnw clean package -DskipTests
+```
+
+### Integration Tests
+
+```bash
+cd integration-tests
+
+# Run all integration tests (Auth + Patient)
+./mvnw test
+
+# Run specific test class
+./mvnw test -Dtest=AuthIntegrationTest
+./mvnw test -Dtest=PatientIntegrationTest
 ```
 
 ## Development
