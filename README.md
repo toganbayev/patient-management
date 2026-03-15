@@ -37,7 +37,8 @@ communication, RESTful APIs, and containerized deployment.
 ### API Gateway
 
 - **Single Entry Point** - Unified routing for all microservices
-- **Dynamic Routing** - Routes `/api/patients/**` to Patient Service, `/auth/**` to Auth Service, `/api-docs/patients` and `/api-docs/auth` to OpenAPI documentation
+- **Dynamic Routing** - Routes `/api/patients/**` to Patient Service, `/auth/**` to Auth Service, `/api-docs/patients`
+  and `/api-docs/auth` to OpenAPI documentation
 - **JWT Validation Filter** - `JwtValidationGatewayFilterFactory` validates Bearer tokens via auth-service `/validate`
   before forwarding; returns 401 if missing or invalid
 - **Production Profile** - `application-prod.yml` configures Docker/ECS hostnames via `host.docker.internal`
@@ -69,8 +70,10 @@ communication, RESTful APIs, and containerized deployment.
 - **Inter-Service Communication** - gRPC for synchronous calls, Kafka for async events
 - **Global Exception Handling** - Centralized error handling across services
 - **Sample Data** - Pre-loaded test data for quick development
-- **AWS CDK Infrastructure** - `infrasctructure/` module defines full cloud stack (VPC, RDS, MSK, ECS Fargate) using AWS CDK for Java
-- **LocalStack Support** - Deploy and test the entire AWS stack locally via LocalStack; `localstack-deploy.sh` automates stack teardown and redeploy
+- **AWS CDK Infrastructure** - `infrasctructure/` module defines full cloud stack (VPC, RDS, MSK, ECS Fargate) using AWS
+  CDK for Java
+- **LocalStack Support** - Deploy and test the entire AWS stack locally via LocalStack; `localstack-deploy.sh` automates
+  stack teardown and redeploy
 
 ## Technology Stack
 
@@ -264,9 +267,11 @@ cd infrasctructure
 bash localstack-deploy.sh
 ```
 
-The script deletes any existing `patient-management` CloudFormation stack, redeploys from `cdk.out/localstack.template.json`, and prints the ALB DNS name for the API Gateway.
+The script deletes any existing `patient-management` CloudFormation stack, redeploys from
+`cdk.out/localstack.template.json`, and prints the ALB DNS name for the API Gateway.
 
 **Resources provisioned:**
+
 - VPC with 2 AZs
 - RDS PostgreSQL 17.2 (auth-service-db, patient-service-db)
 - MSK (Kafka) cluster
@@ -529,23 +534,23 @@ to `/api/patients/**`. Sample requests are available in `api-requests/auth-servi
 │  JPA/H2/PG   │
 └──────┬───────┘
        │
-       ├─── gRPC ───────────────────────────────────────────┐
-       │                                                    ▼
+       ├─── gRPC ────────────────────────────────────────┐
+       │                                                 ▼
        │                                        ┌──────────────────┐
        │                                        │  Billing Service │
        │                                        │  gRPC (9001)     │
        │                                        │  HTTP (4001)     │
        │                                        └──────────────────┘
        │
-       ├─── JPA ────────────────────────────────────────────┐
-       │                                                    ▼
+       ├─── JPA ─────────────────────────────────────────┐
+       │                                                 ▼
        │                                        ┌──────────────────┐
        │                                        │  H2 / PostgreSQL │
        │                                        │  (Patient DB)    │
        │                                        └──────────────────┘
        │
-       └─── Kafka publish ──────────────────────────────────┐
-                                                            ▼
+       └─── Kafka publish ───────────────────────────────┐
+                                                         ▼
                                                 ┌──────────────────┐
                                                 │  Kafka Broker    │
                                                 │  (9092)          │
