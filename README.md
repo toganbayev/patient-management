@@ -510,9 +510,9 @@ to `/api/patients/**`. Sample requests are available in `api-requests/auth-servi
 ### Microservices Overview
 
 ```
-  Client
-    │
-    ▼
+     Client
+       │
+       ▼
 ┌───────────────────────────────────────────────────────────┐
 │                     API Gateway (4004)                    │
 │                     Spring Cloud GW                       │
