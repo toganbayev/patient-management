@@ -599,7 +599,7 @@ to `/api/patients/**`. Sample requests are available in `api-requests/auth-servi
                         │      │       │ (8080)   │                           │
                         │      │       └──────────┘                           │
                         │      │                                              │
-                        │   ┌──▼───────────────────┐                           │
+                        │   ┌──▼───────────────────┐                          │
                         │   │  RDS PostgreSQL 17.2 │                          │
                         │   │  auth-service-db     │                          │
                         │   │  patient-service-db  │                          │
