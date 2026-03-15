@@ -12,6 +12,8 @@ communication, RESTful APIs, and containerized deployment.
 [![JWT](https://img.shields.io/badge/JWT-JJWT%200.12.6-black.svg)](https://github.com/jwtk/jjwt)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supported-4169E1.svg)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED.svg)](https://www.docker.com/)
+[![AWS CDK](https://img.shields.io/badge/AWS%20CDK-Java-FF9900.svg)](https://docs.aws.amazon.com/cdk/v2/guide/home.html)
+[![LocalStack](https://img.shields.io/badge/LocalStack-Enabled-1D4D3E.svg)](https://localstack.cloud/)
 
 ## Features
 
