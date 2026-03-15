@@ -565,6 +565,50 @@ to `/api/patients/**`. Sample requests are available in `api-requests/auth-servi
                                                 └──────────────────┘
 ```
 
+### AWS Infrastructure (LocalStack / Production)
+
+```
+                        ┌─────────────────────────────────────────────────────┐
+                        │                      AWS VPC (2 AZs)                │
+                        │                                                     │
+                        │   ┌─────────────────────────────────────────────┐   │
+                        │   │         Application Load Balancer           │   │
+                        │   └────────────────────┬────────────────────────┘   │
+                        │                        │ HTTP                       │
+                        │              ┌─────────▼──────────┐                 │
+                        │              │  ECS Fargate        │                │
+                        │              │  api-gateway (4004) │                │
+                        │              └──┬──────────────────┘                │
+                        │                 │                                   │
+                        │    ┌────────────┼──────────────────────────┐        │
+                        │    ▼            ▼                          ▼        │
+                        │ ┌──────────┐ ┌──────────┐           ┌──────────┐    │
+                        │ │ ECS      │ │ ECS      │           │ ECS      │    │
+                        │ │ auth-svc │ │ patient  │           │ billing  │    │
+                        │ │ (4005)   │ │ svc(4000)│           │ svc(9001)│    │
+                        │ └────┬─────┘ └────┬─────┘           └──────────┘    │
+                        │      │            │ Kafka publish                   │
+                        │      │       ┌────▼──────────────┐                  │
+                        │      │       │  MSK (Kafka)      │                  │
+                        │      │       │  topic: patient   │                  │
+                        │      │       └────┬──────────────┘                  │
+                        │      │            ▼                                 │
+                        │      │       ┌──────────┐                           │
+                        │      │       │ ECS      │                           │
+                        │      │       │analytics │                           │
+                        │      │       │ (8080)   │                           │
+                        │      │       └──────────┘                           │
+                        │      │                                              │
+                        │   ┌──▼──────────────────┐                           │
+                        │   │  RDS PostgreSQL 17.2 │                          │
+                        │   │  auth-service-db     │                          │
+                        │   │  patient-service-db  │                          │
+                        │   └──────────────────────┘                          │
+                        └─────────────────────────────────────────────────────┘
+```
+
+Provisioned via AWS CDK (`infrasctructure/`) and deployable locally with LocalStack (`localstack-deploy.sh`).
+
 ### Patient Service - Layered Architecture
 
 ```
@@ -906,7 +950,7 @@ Test gRPC endpoints using tools like:
 - [ ] Add pagination and sorting for patient listing
 - [ ] Implement search functionality (by name, email)
 - [ ] Add patient medical history tracking
-- [ ] Add comprehensive unit and integration tests
+- [x] Integration tests for Auth and Patient services (`integration-tests/`)
 - [ ] Implement billing operations (invoices, payments)
 - [ ] Add service mesh (Istio/Linkerd) for production
 - [ ] Implement audit logging and event sourcing
