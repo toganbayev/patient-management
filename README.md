@@ -35,9 +35,10 @@ communication, RESTful APIs, and containerized deployment.
 ### API Gateway
 
 - **Single Entry Point** - Unified routing for all microservices
-- **Dynamic Routing** - Routes `/api/patients/**` to Patient Service and `/api-docs/patients` to OpenAPI documentation
+- **Dynamic Routing** - Routes `/api/patients/**` to Patient Service, `/auth/**` to Auth Service, `/api-docs/patients` and `/api-docs/auth` to OpenAPI documentation
 - **JWT Validation Filter** - `JwtValidationGatewayFilterFactory` validates Bearer tokens via auth-service `/validate`
   before forwarding; returns 401 if missing or invalid
+- **Production Profile** - `application-prod.yml` configures Docker/ECS hostnames via `host.docker.internal`
 - **Spring Cloud Gateway** - Modern, non-blocking API gateway
 - **Port 4004** - Centralized access point
 
@@ -66,6 +67,8 @@ communication, RESTful APIs, and containerized deployment.
 - **Inter-Service Communication** - gRPC for synchronous calls, Kafka for async events
 - **Global Exception Handling** - Centralized error handling across services
 - **Sample Data** - Pre-loaded test data for quick development
+- **AWS CDK Infrastructure** - `infrasctructure/` module defines full cloud stack (VPC, RDS, MSK, ECS Fargate) using AWS CDK for Java
+- **LocalStack Support** - Deploy and test the entire AWS stack locally via LocalStack; `localstack-deploy.sh` automates stack teardown and redeploy
 
 ## Technology Stack
 
@@ -84,6 +87,8 @@ communication, RESTful APIs, and containerized deployment.
 | **API Documentation**           | SpringDoc OpenAPI 3 (v2.8.15)                     |
 | **Validation**                  | Jakarta Bean Validation                           |
 | **Authentication**              | Spring Security + JJWT                            |
+| **Infrastructure as Code**      | AWS CDK for Java                                  |
+| **Local Cloud Testing**         | LocalStack                                        |
 
 ## Quick Start
 
@@ -223,6 +228,48 @@ docker run -d --name patient-service -p 4000:4000 \
 
 - gRPC Server: `localhost:9001`
 - HTTP Port: `4001` (reserved for future use)
+
+### Option 3: LocalStack Deployment (AWS CDK)
+
+Deploys the full AWS stack (VPC, RDS, MSK, ECS Fargate) locally using [LocalStack](https://localstack.cloud/).
+
+#### Prerequisites
+
+- **LocalStack** running on `http://localhost:4566`
+- **AWS CDK** installed (`npm install -g aws-cdk`)
+- All service Docker images built locally
+
+#### 1. Build all service images
+
+```bash
+docker build -t auth-service:latest ./auth-service
+docker build -t patient-service:latest ./patient-service
+docker build -t billing-service:latest ./billing-service
+docker build -t analytics-service:latest ./analytics-service
+docker build -t api-gateway:latest ./api-gateway
+```
+
+#### 2. Synthesize the CDK stack
+
+```bash
+cd infrasctructure
+./mvnw compile exec:java
+```
+
+#### 3. Deploy to LocalStack
+
+```bash
+bash localstack-deploy.sh
+```
+
+The script deletes any existing `patient-management` CloudFormation stack, redeploys from `cdk.out/localstack.template.json`, and prints the ALB DNS name for the API Gateway.
+
+**Resources provisioned:**
+- VPC with 2 AZs
+- RDS PostgreSQL 17.2 (auth-service-db, patient-service-db)
+- MSK (Kafka) cluster
+- ECS Fargate cluster with services for all microservices
+- Application Load Balancer fronting the API Gateway
 
 ## API Documentation
 
@@ -590,6 +637,12 @@ patient-management/
 │   │   └── resources/
 │   │       └── application.properties
 │   └── pom.xml
+├── infrasctructure/                # AWS CDK infrastructure (Java) + LocalStack deployment
+│   ├── src/main/java/com/pm/stack/
+│   │   └── LocalStack.java         # CDK stack: VPC, RDS, MSK, ECS Fargate, ALB
+│   ├── cdk.out/                    # Synthesized CloudFormation templates
+│   ├── localstack-deploy.sh        # Deploy/redeploy to LocalStack
+│   └── pom.xml
 ├── api-requests/                   # Sample HTTP requests
 │   ├── patient-service/
 │   └── auth-service/
@@ -838,6 +891,8 @@ Test gRPC endpoints using tools like:
 - [x] API Gateway with Spring Cloud Gateway
 - [x] Analytics Service for event-driven analytics
 - [x] Authentication and authorization with Auth Service (JWT/Spring Security)
+- [x] AWS CDK infrastructure definition (VPC, RDS, MSK, ECS Fargate, ALB)
+- [x] LocalStack local cloud deployment with `localstack-deploy.sh`
 
 ### Planned Features
 
