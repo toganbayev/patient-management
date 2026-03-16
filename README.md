@@ -575,7 +575,7 @@ to `/api/patients/**`. Sample requests are available in `api-requests/auth-servi
                         │   │         Application Load Balancer           │   │
                         │   └────────────────────┬────────────────────────┘   │
                         │                        │ HTTP                       │
-                        │              ┌─────────▼──────────┐                 │
+                        │              ┌─────────▼───────────┐                │
                         │              │  ECS Fargate        │                │
                         │              │  api-gateway (4004) │                │
                         │              └──┬──────────────────┘                │
